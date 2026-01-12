@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+import Sidebar from '../Sidebar';
 import { ProfileHeader } from './ProfileHeader';
 import { PersonalInfoSection } from './PersonalInfoSection';
 import { SecuritySection } from './SecuritySection';
@@ -65,11 +66,13 @@ export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
   };
 
   return (
-    <div className={styles.pageContainer}>
-      {/* Header */}
-      <div className={styles.topHeader}>
-        <Container>
-          <div className={styles.headerContent}>
+    <>
+      <Sidebar activeItem="" />
+      <div className={styles.pageContainer}>
+        {/* Header */}
+        <div className={styles.topHeader}>
+          <Container>
+            <div className={styles.headerContent}>
             <Button
               variant="light"
               onClick={onBack}
@@ -155,6 +158,7 @@ export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
         onCancel={handleCancelImage}
         onSave={handleSaveImage}
       />
-    </div>
+      </div>
+    </>
   );
 }
