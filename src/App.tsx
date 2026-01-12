@@ -12,7 +12,6 @@ function App() {
   const handleSave = (name: string, email: string, password?: string) => {
     setUser({ name, email })
     console.log('Usuario actualizado:', { name, email, password: password ? '***' : 'sin cambio' })
-    alert('¡Perfil actualizado exitosamente!')
   }
 
   return (

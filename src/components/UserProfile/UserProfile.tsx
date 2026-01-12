@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+import { useFormValidation, validateEmail, validateName } from '../../hooks/useFormValidation';
 import Sidebar from '../Sidebar';
 import { ProfileHeader } from './ProfileHeader';
 import { PersonalInfoSection } from './PersonalInfoSection';
@@ -7,6 +8,7 @@ import { SecuritySection } from './SecuritySection';
 import { PreferencesSection } from './PreferencesSection';
 import { DangerZone } from './DangerZone';
 import { ImageUploadModal } from './ImageUploadModal';
+import { NotificationToast } from '../NotificationToast';
 import styles from './UserProfile.module.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -20,6 +22,21 @@ export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [isEditingPassword] = useState(false);
+
+  // Estados para notificaciones
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastVariant, setToastVariant] = useState<'success' | 'danger'>('success');
+
+  // Validación de formulario
+  const { 
+    errors, 
+    handleBlur, 
+    validateAllFields
+  } = useFormValidation<{ name: string; email: string }>({
+    name: (value) => validateName(value) ? '' : 'El nombre debe contener al menos 2 caracteres',
+    email: (value) => validateEmail(value) ? '' : 'Ingresa un correo electrónico válido'
+  });
   
   // Estados para la imagen de perfil
   const [showImageModal, setShowImageModal] = useState(false);
@@ -55,6 +72,14 @@ export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validación completa antes de guardar
+    if (!validateAllFields({ name, email })) {
+      setToastMessage('Por favor corrige los errores antes de guardar.');
+      setToastVariant('danger');
+      setShowToast(true);
+      return;
+    }
     
     if (isEditingPassword) {
       // La lógica de password está ahora en SecuritySection
@@ -63,6 +88,10 @@ export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
     } else {
       onSave(name, email);
     }
+
+    setToastMessage('Perfil actualizado correctamente.');
+    setToastVariant('success');
+    setShowToast(true);
   };
 
   return (
@@ -110,6 +139,8 @@ export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
                     email={email}
                     onNameChange={setName}
                     onEmailChange={setEmail}
+                    errors={errors}
+                    onBlur={handleBlur}
                   />
 
                   <hr className={styles.divider} />
@@ -157,6 +188,14 @@ export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
         imagePreview={imagePreview}
         onCancel={handleCancelImage}
         onSave={handleSaveImage}
+      />
+      
+      {/* Notificaciones */}
+      <NotificationToast
+        show={showToast}
+        onClose={() => setShowToast(false)}
+        message={toastMessage}
+        variant={toastVariant}
       />
       </div>
     </>
