@@ -9,8 +9,8 @@ jest.mock('../components/UserProfile', () => ({
   UserProfile: () => <div>UserProfile Component</div>
 }));
 
-describe('App Component', () => {
-  it('renders Home component on default route', () => {
+describe('Componente App', () => {
+  it('renderiza el componente Home en la ruta por defecto', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <App />
@@ -19,7 +19,7 @@ describe('App Component', () => {
     expect(screen.getByText('Home Page')).toBeInTheDocument();
   });
 
-  it('renders Dashboard component on /dashboard route', () => {
+  it('renderiza el componente Dashboard en la ruta /dashboard', () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <App />
@@ -28,7 +28,7 @@ describe('App Component', () => {
     expect(screen.getByText('Dashboard Page')).toBeInTheDocument();
   });
 
-   it('renders UserProfile component on /profile route', () => {
+   it('renderiza el componente UserProfile en la ruta /profile', () => {
     render(
       <MemoryRouter initialEntries={['/profile']}>
         <App />

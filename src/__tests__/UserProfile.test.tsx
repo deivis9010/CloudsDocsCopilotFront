@@ -9,7 +9,7 @@ jest.mock('../components/Sidebar', () => {
   };
 });
 
-describe('UserProfile Component', () => {
+describe('Componente UserProfile', () => {
   const mockUser = {
     name: 'Test User',
     email: 'test@example.com'
@@ -21,7 +21,7 @@ describe('UserProfile Component', () => {
     jest.clearAllMocks();
   });
 
-  test('renders user profile with initial data', () => {
+  test('renderiza el perfil de usuario con los datos iniciales', () => {
     render(
       <UserProfile 
         user={mockUser} 
@@ -36,7 +36,7 @@ describe('UserProfile Component', () => {
     expect(screen.getByTestId('sidebar-mock')).toBeInTheDocument();
   });
 
-  test('allows updating name and email, and calls onSave', () => {
+  test('permite actualizar nombre y correo, y llama a onSave', () => {
     render(
       <UserProfile 
         user={mockUser} 
@@ -61,7 +61,7 @@ describe('UserProfile Component', () => {
     expect(mockOnSave).toHaveBeenCalledWith('New Name', 'new@example.com');
   });
 
-  test('calls onBack when Cancelar button is clicked', () => {
+  test('llama a onBack cuando se hace clic en el botón Cancelar', () => {
     render(
       <UserProfile 
         user={mockUser} 
