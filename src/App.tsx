@@ -1,9 +1,12 @@
 import { useState } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
+import Dashboard from './pages/Dashboard'
+import Home from './pages/Home';
 import { UserProfile } from './components/UserProfile'
 import './App.css'
 
 function App() {
-  const [showProfile, setShowProfile] = useState(true)
+  const navigate = useNavigate();
   const [user, setUser] = useState({ name: 'Juan Pérez', email: 'juan@ejemplo.com' })
 
   const handleSave = (name: string, email: string, password?: string) => {
@@ -12,32 +15,22 @@ function App() {
     alert('¡Perfil actualizado exitosamente!')
   }
 
-  const handleBack = () => {
-    setShowProfile(false)
-    alert('Volviendo al dashboard...')
-  }
-
-  if (!showProfile) {
-    return (
-      <div className="container mt-5 text-center">
-        <h1>Dashboard Principal</h1>
-        <button 
-          className="btn btn-primary mt-3"
-          onClick={() => setShowProfile(true)}
-        >
-          Ver mi perfil
-        </button>
-      </div>
-    )
-  }
-
   return (
-    <UserProfile 
-      user={user}
-      onSave={handleSave}
-      onBack={handleBack}
-    />
-  )
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route 
+        path="/profile" 
+        element={
+          <UserProfile 
+            user={user} 
+            onSave={handleSave} 
+            onBack={() => navigate('/dashboard')} 
+          />
+        } 
+      />
+    </Routes>
+  );
 }
 
 export default App
