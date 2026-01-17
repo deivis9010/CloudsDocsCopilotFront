@@ -42,7 +42,7 @@ export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
   const [showImageModal, setShowImageModal] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [, setSelectedFile] = useState<File | null>(null);
 
   const handleImageSelect = (file: File) => {
     // Crear preview de la imagen
@@ -60,7 +60,6 @@ export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
       setProfileImage(imagePreview);
       setShowImageModal(false);
       // Aquí podrías subir la imagen al servidor
-      console.log('Imagen guardada:', selectedFile);
     }
   };
 
