@@ -10,13 +10,7 @@ const config: Config = {
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: {
-        jsx: 'react-jsx',
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-        module: 'commonjs',
-        moduleResolution: 'node',
-      },
+      tsconfig: 'tsconfig.test.json', // USA EL NUEVO TSCONFIG DE TEST
     }],
   },
   collectCoverageFrom: [

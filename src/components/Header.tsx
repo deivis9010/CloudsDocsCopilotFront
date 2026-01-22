@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Form, Button, InputGroup } from 'react-bootstrap';
 import styles from './Header.module.css';
 
 const Header: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <header className={styles.header}>
       <div className={styles.searchBarWrapper}>
@@ -36,7 +39,11 @@ const Header: React.FC = () => {
           </svg>
         </Button>
 
-        <div className={styles.userBadge}>
+        <div 
+          className={styles.userBadge} 
+          onClick={() => navigate('/profile')}
+          style={{ cursor: 'pointer' }}
+        >
           <div className={styles.userAvatarSmall}>D</div>
           <span>deivis9010</span>
         </div>
