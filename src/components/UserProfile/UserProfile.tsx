@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
-import { useFormValidation, validateEmail, validateName } from '../../hooks/useFormValidation';
+import { useFormValidation } from '../../hooks/useFormValidation';
 import { ProfileHeader } from './ProfileHeader';
 import { PersonalInfoSection } from './PersonalInfoSection';
 import { SecuritySection } from './SecuritySection';
@@ -10,6 +10,7 @@ import { ImageUploadModal } from './ImageUploadModal';
 import { NotificationToast } from '../NotificationToast';
 import styles from './UserProfile.module.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { usePageTitle } from '../../hooks/usePageInfoTitle';
 
 interface UserProfileProps {
   user: { name: string; email: string };
@@ -18,6 +19,13 @@ interface UserProfileProps {
 }
 
 export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
+
+  usePageTitle({
+        title: 'Perfil de usuario',
+        subtitle: 'Perfil',
+        documentTitle: 'Perfil de usuario',
+        metaDescription: 'Página de perfil de usuario para CloudDocs Copilot'
+      });
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [isEditingPassword] = useState(false);
@@ -28,13 +36,15 @@ export function UserProfile({ user, onSave, onBack }: UserProfileProps) {
   const [toastVariant, setToastVariant] = useState<'success' | 'danger'>('success');
 
   // Validación de formulario
-  const { 
-    errors, 
-    handleBlur, 
-    validateAllFields
+  const {
+    errors,
+    handleBlur,
+    validateAllFields,
+    validateEmail,
+    validateName
   } = useFormValidation<{ name: string; email: string }>({
-    name: (value) => validateName(value) ? '' : 'El nombre debe contener al menos 2 caracteres',
-    email: (value) => validateEmail(value) ? '' : 'Ingresa un correo electrónico válido'
+    name: (value: string): string => validateName(value) ? '' : 'El nombre debe contener al menos 2 caracteres',
+    email: (value: string): string => validateEmail(value) ? '' : 'Ingresa un correo electrónico válido'
   });
   
   // Estados para la imagen de perfil

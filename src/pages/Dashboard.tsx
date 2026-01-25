@@ -1,130 +1,55 @@
 import React from 'react';
-<<<<<<< HEAD
-import { Container, Row, Col } from 'react-bootstrap';
-import MainLayout from '../components/MainLayout';
-import DocumentCard from '../components/DocumentCard';
-import { getMockDocuments } from '../services/mockDocumentList';
-import { usePageTitle } from '../hooks/usePageInfoTitle';
-=======
 import { Container, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import MainLayout from '../components/MainLayout';
 import DocumentCard from '../components/DocumentCard';
 import { useHttpRequest } from '../hooks/useHttpRequest';
 import { usePageTitle } from '../hooks/usePageInfoTitle';
-import { apiClient } from '../api/httpClient.config';
->>>>>>> 9590e4f209acff68db4dc49b898d6d75cc29b111
 import type { Document } from '../types/document.types';
 
+interface DocumentsApiResponse {
+  success: boolean;
+  count: number;
+  documents: Document[];
+};
+
 const Dashboard: React.FC = () => {
+    
   usePageTitle({
     title: 'Mis Documentos',
     subtitle: 'Organizado automáticamente con IA',
     documentTitle: 'Mis Documentos',
     metaDescription: 'Gestiona y organiza tus documentos con inteligencia artificial'
   });
-<<<<<<< HEAD
-// Datos de ejemplo
-const [documents, setDocuments] = React.useState<Document[]>([]);
 
- React.useEffect(() => {
-   getMockDocuments().then((docs) => setDocuments(docs));
- }, []);
-=======
-
-  // Estados simples para el login temporal
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
-  const [loginError, setLoginError] = React.useState<string | null>(null);
+  
 
   // Usar el hook useHttpRequest para obtener documentos
-  const { execute, data: documents, isLoading, isError, error } = useHttpRequest<Document[]>();
+  const { execute, data: documents, isLoading, isError, error } = useHttpRequest<DocumentsApiResponse>();
 
-  // ⚠️ TEMPORAL: Auto-login con credenciales hardcodeadas
-  // TODO: ELIMINAR EN PRODUCCIÓN - Implementar sistema de autenticación real
-  React.useEffect(() => {
-    let isMounted = true;
+  
 
-    const performLogin = async () => {
-      setIsLoggingIn(true);
-      setLoginError(null);
 
-      try {
-        await apiClient.post('/auth/login', {
-          email: 'admin@admin.com',
-          password: '123'
-        });
-
-        if (isMounted) {
-          setIsAuthenticated(true);
-          setIsLoggingIn(false);
-        }
-      } catch (err: unknown) {
-        if (isMounted) {
-          const errorMessage = err instanceof Error ? err.message : 'Login failed';
-          setLoginError(errorMessage);
-          setIsLoggingIn(false);
-        }
-      }
-    };
-
-    performLogin();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   React.useEffect(() => {
-    // Solo cargar documentos después de autenticarse
-    if (!isAuthenticated) return;
-
-    // Obtener documentos al montar el componente
-    const userId = localStorage.getItem('userId') || 'default-user';
-    const organizationId = localStorage.getItem('organizationId') || '697008fa7bdfacca3aa23687';
     
-    execute({
+    // Obtener documentos al montar el componente   
+    const organizationId = '69743cfea9982c50feb47fa6';
+    
+      execute({
       method: 'GET',
       url: `/documents/recent/${organizationId}`,
-      config: {
-        params: { userId }
-      }
+      
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
->>>>>>> 9590e4f209acff68db4dc49b898d6d75cc29b111
+    
+  }, [execute]);
 
+ 
   return (
     <MainLayout>
       <Container fluid>
-<<<<<<< HEAD
-        <Row className="g-4">
-          {documents.map((doc) => (
-            <Col key={doc.id} xs={12} sm={6} md={4} lg={3}>
-              <DocumentCard document={doc} />
-            </Col>
-          ))}
-        </Row>
-=======
-        {/* ⚠️ TEMPORAL: Mostrar estado de login */}
-        {isLoggingIn && (
-          <div className="text-center py-5">
-            <Spinner animation="border" role="status">
-              <span className="visually-hidden">Authenticating...</span>
-            </Spinner>
-            <p className="mt-3">Authenticating...</p>
-          </div>
-        )}
-
-        {/* Error de login */}
-        {loginError && (
-          <Alert variant="danger" className="my-3">
-            <Alert.Heading>Authentication Error</Alert.Heading>
-            <p>{loginError}</p>
-          </Alert>
-        )}
-
+       
         {/* Loading state */}
-        {!isLoggingIn && isLoading && (
+        {isLoading && (
           <div className="text-center py-5">
             <Spinner animation="border" role="status">
               <span className="visually-hidden">Loading documents...</span>
@@ -134,7 +59,7 @@ const [documents, setDocuments] = React.useState<Document[]>([]);
         )}
 
         {/* Error state */}
-        {!isLoggingIn && isError && (
+        {isError && (
           <Alert variant="danger" className="my-3">
             <Alert.Heading>Error loading documents</Alert.Heading>
             <p>{error?.message || 'An unexpected error occurred'}</p>
@@ -142,11 +67,11 @@ const [documents, setDocuments] = React.useState<Document[]>([]);
         )}
 
         {/* Success state */}
-        {!isLoggingIn && !isLoading && !isError && documents && isAuthenticated && (
+        {!isLoading && !isError && documents && (
           <Row className="g-4">
-            {documents.length > 0 ? (
-              documents.map((doc) => (
-                <Col key={doc.id} xs={12} sm={6} md={4} lg={3}>
+            {documents.documents.length > 0 ? (
+              documents.documents.map((doc, index) => (
+                <Col key={index} xs={12} sm={6} md={4} lg={3}>
                   <DocumentCard document={doc} />
                 </Col>
               ))
@@ -159,7 +84,6 @@ const [documents, setDocuments] = React.useState<Document[]>([]);
             )}
           </Row>
         )}
->>>>>>> 9590e4f209acff68db4dc49b898d6d75cc29b111
       </Container>
     </MainLayout>
   );

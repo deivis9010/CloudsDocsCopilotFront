@@ -2,13 +2,25 @@ import { useState } from 'react';
 import { useFormValidation } from '../hooks/useFormValidation';
 import { Sparkles, User, Mail, Lock } from 'lucide-react';
 import styles from './RegisterForm.module.css';
+import { usePageTitle } from '../hooks/usePageInfoTitle';
+import { useNavigate } from 'react-router-dom';
 
 interface RegisterFormProps {
   onRegister?: (data: { name: string; email: string; password: string }) => void;
   onSwitchToLogin?: () => void;
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin }) => {
+const RegisterForm: React.FC<RegisterFormProps> = () => {
+
+  usePageTitle({
+        title: 'Register',
+        subtitle: 'Register',
+        documentTitle: 'Registro de usuario',
+        metaDescription: 'Página de registro para CloudDocs Copilot'
+      });
+    
+  const navigate = useNavigate(); 
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -64,7 +76,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
       return;
     }
     try {
-      const res = await fetch('http://localhost:4000/api/auth/register', {
+      const res = await fetch('http://localhost:3000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: form.name, email: form.email, password: form.password, confirmPassword: form.confirm })
@@ -75,8 +87,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
       } else {
         setSuccess(data.message || 'Registro exitoso. Revisa tu email para confirmar tu cuenta.');
         setForm({ name: '', email: '', password: '', confirm: '' });
+        navigate('/login');
       }
-    } catch (err) {
+    } catch {
       setError('Error de conexión con el servidor.');
     }
   };
@@ -160,7 +173,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
           </form>
           <div className={styles.registerPrompt}>
             ¿Ya tienes una cuenta?{' '}
-            <button type="button" onClick={onSwitchToLogin} className={styles.registerLink}>
+            <button type="button" onClick={() => navigate('/login')} className={styles.registerLink}>
               Inicia sesión aquí
             </button>
           </div>
