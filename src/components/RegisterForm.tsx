@@ -9,7 +9,6 @@ interface RegisterFormProps {
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin }) => {
-
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -17,6 +16,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
     confirm: ''
   });
   const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
 
   // Validaciones por campo
   const validationRules = {
@@ -49,7 +49,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
     clearAllErrors
   } = useFormValidation<typeof form>(validationRules);
 
-  const [error, setError] = useState('');
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError('');

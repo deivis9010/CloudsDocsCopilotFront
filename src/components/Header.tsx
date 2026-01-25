@@ -1,8 +1,17 @@
 import React from 'react';
+<<<<<<< HEAD
+=======
+import { useNavigate } from 'react-router-dom';
+>>>>>>> 9590e4f209acff68db4dc49b898d6d75cc29b111
 import { Form, Button, InputGroup } from 'react-bootstrap';
 import styles from './Header.module.css';
 
 const Header: React.FC = () => {
+<<<<<<< HEAD
+=======
+  const navigate = useNavigate();
+
+>>>>>>> 9590e4f209acff68db4dc49b898d6d75cc29b111
   return (
     <header className={styles.header}>
       <div className={styles.searchBarWrapper}>
@@ -36,7 +45,15 @@ const Header: React.FC = () => {
           </svg>
         </Button>
 
+<<<<<<< HEAD
         <div className={styles.userBadge}>
+=======
+        <div 
+          className={styles.userBadge} 
+          onClick={() => navigate('/profile')}
+          style={{ cursor: 'pointer' }}
+        >
+>>>>>>> 9590e4f209acff68db4dc49b898d6d75cc29b111
           <div className={styles.userAvatarSmall}>D</div>
           <span>deivis9010</span>
         </div>

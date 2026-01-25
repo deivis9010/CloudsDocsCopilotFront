@@ -1,0 +1,40 @@
+.toastSuccess {
+  background-color: #e3f2fd !important; /* light blue */
+  border-left: 4px solid #0d6efd !important; /* primary blue matching the button */
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.toastDanger {
+  background-color: #ffebee !important; /* light red */
+  border-left: 4px solid #dc3545 !important; /* danger red */
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.toastHeader {
+  background-color: transparent !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+}
+
+.toastBody {
+  color: #212529; /* dark text */
+  font-size: 0.95rem;
+  padding-top: 0.25rem !important;
+}
+
+.successTitle {
+  color: #0d6efd; /* primary blue text */
+  font-weight: 600;
+}
+
+.dangerTitle {
+  color: #dc3545; /* danger red text */
+  font-weight: 600;
+}
+
+.icon {
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
+}
