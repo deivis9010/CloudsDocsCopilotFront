@@ -4,6 +4,8 @@ Sistema de gestión de documentos inteligente con IA para organización automát
 
 ## 📋 Tabla de Contenidos
 
+- [📊 Revisión de Projects](./PROJECT_REVIEW.md) - Análisis completo de épicas, issues y progreso
+- [🗺️ Roadmap](./ROADMAP.md) - Timeline y planificación de features
 - [Características](#características)
 - [Stack Tecnológico](#stack-tecnológico)
 - [Estructura del Proyecto](#estructura-del-proyecto)
@@ -337,7 +339,22 @@ const response = await apiClient.get('/api/documents');
 
 ## 📚 Documentación Adicional
 
-### Guías Específicas
+### Guías de Proyecto
+
+- **[📊 Project Review](./PROJECT_REVIEW.md)** - Revisión completa de épicas, issues y progreso del proyecto
+  - Estadísticas y métricas del proyecto
+  - Estado de las 3 épicas principales
+  - Análisis de issues abiertos y cerrados
+  - Recomendaciones de mejora
+  - Distribución Frontend/Backend
+  
+- **[🗺️ Roadmap](./ROADMAP.md)** - Timeline y planificación de features
+  - Fases completadas y en progreso
+  - Releases planificados
+  - Métricas de éxito
+  - Prioridades actuales
+
+### Guías Técnicas
 
 - **[API Usage Guide](src/api/README.md)** - Guía completa de consumo de APIs
   - Cuándo usar `useHttpRequest` vs `apiClient`
