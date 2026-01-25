@@ -1,42 +1,65 @@
 // src/components/LoginForm/LoginForm.tsx
 import React, { useState } from "react";
 import styles from "./LoginForm.module.css";
-import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { usePageTitle } from "../../hooks/usePageInfoTitle";
+import { useAuth } from "../../hooks/useAuth";
+import { useFormValidation } from "../../hooks/useFormValidation";
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  usePageTitle({
+      title: 'Login',
+      subtitle: 'Login',
+      documentTitle: 'Inicio de sesión',
+      metaDescription: 'Página de inicio de sesión para CloudDocs Copilot'
+    });
+  
+
+
   const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const isValidEmail = (v: string) =>
-    /^[^\s@]+@([^\s@.]+\.)+[^\s@.]{2,}$/.test(v.trim().toLowerCase());
+  const {
+    validateEmail,
+    setFieldError,
+    clearFieldError,
+    errors,
+    handleBlur,
+  } = useFormValidation<{ email: string; password: string }>({});
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setServerError(null);
 
-    if (!email.trim() || !isValidEmail(email)) {
-      setError("Ingresa un correo válido.");
-      return;
+    // validate email using hook helper
+    const emailValid = validateEmail(email.trim().toLowerCase());
+    if (!emailValid) {
+      setFieldError('email', 'Ingresa un correo válido.');
+    } else {
+      clearFieldError('email');
     }
-    if (!password) {
-      setError("La contraseña es requerida.");
-      return;
-    }
+
+    if (!emailValid) return;
 
     try {
       setLoading(true);
-      await login(email.trim().toLowerCase(), password, rememberMe);
+      await login(email.trim().toLowerCase(), password);
       navigate("/dashboard", { replace: true });
-    } catch (err: any) {
-      setError(err?.message || "No se pudo iniciar sesión.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setServerError(err.message);
+      } else if (typeof err === "string") {
+        setServerError(err);
+      } else {
+        setServerError("No se pudo iniciar sesión.");
+      }
     } finally {
       setLoading(false);
     }
@@ -91,8 +114,12 @@ export default function LoginForm() {
                 placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={(e) => handleBlur('email', e.target.value)}
                 autoComplete="email"
               />
+              {errors.email && (
+                <div style={{ color: "#b91c1c", fontSize: "0.875rem" }}>{errors.email}</div>
+              )}
             </div>
 
             {/* Password */}
@@ -107,21 +134,15 @@ export default function LoginForm() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                
                 autoComplete="current-password"
               />
+              
             </div>
 
             {/* Remember + Forgot */}
             <div className={styles.rememberRow}>
-              <label className={styles.rememberLabel}>
-                <input
-                  className={styles.checkbox}
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <span>Recordarme</span>
-              </label>
+              
 
               <a className={styles.forgotPasswordLink} href="#">
                 ¿Olvidaste tu contraseña?
@@ -129,8 +150,8 @@ export default function LoginForm() {
             </div>
 
             {/* Error */}
-            {error && (
-              <div style={{ color: "#b91c1c", fontSize: "0.875rem" }}>{error}</div>
+            {serverError && (
+              <div style={{ color: "#b91c1c", fontSize: "0.875rem" }}>{serverError}</div>
             )}
 
             {/* Submit */}
@@ -170,7 +191,7 @@ export default function LoginForm() {
           {/* Register */}
           <div className={styles.registerPrompt}>
             ¿No tienes una cuenta?{" "}
-            <a className={styles.registerLink} href="#">
+            <a className={styles.registerLink} href="/register">
               Regístrate aquí
             </a>
           </div>
