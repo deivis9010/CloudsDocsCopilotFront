@@ -4,6 +4,7 @@ Sistema de gestión de documentos inteligente con IA para organización automát
 
 ## 📋 Tabla de Contenidos
 
+- [📊 Executive Summary](./EXECUTIVE_SUMMARY.md) - Resumen ejecutivo del proyecto (lectura rápida)
 - [📊 Revisión de Projects](./PROJECT_REVIEW.md) - Análisis completo de épicas, issues y progreso
 - [🗺️ Roadmap](./ROADMAP.md) - Timeline y planificación de features
 - [Características](#características)
@@ -339,8 +340,14 @@ const response = await apiClient.get('/api/documents');
 
 ## 📚 Documentación Adicional
 
-### Guías de Proyecto
+### Documentación de Proyecto
 
+- **[📊 Executive Summary](./EXECUTIVE_SUMMARY.md)** - Resumen ejecutivo para lectura rápida
+  - Estado actual del proyecto
+  - Métricas clave y logros
+  - Prioridades inmediatas
+  - Timeline visual
+  
 - **[📊 Project Review](./PROJECT_REVIEW.md)** - Revisión completa de épicas, issues y progreso del proyecto
   - Estadísticas y métricas del proyecto
   - Estado de las 3 épicas principales
