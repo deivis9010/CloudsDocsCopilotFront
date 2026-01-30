@@ -59,7 +59,7 @@ jest.mock('../pages/Dashboard', () => ({
   __esModule: true,
   default: () => <div>Dashboard Page</div>
 }));
-jest.mock('../components/UserProfile', () => ({
+jest.mock('../pages/UserProfile', () => ({
   UserProfile: () => <div>UserProfile Component</div>
 }));
 

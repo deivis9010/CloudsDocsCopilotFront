@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { PageProvider } from '../context/PageProvider';
-import { UserProfile } from '../components/UserProfile/UserProfile';
+import { UserProfile } from '../pages/UserProfile';
 
 // Mock Sidebar to avoid router usage issues in tests
 jest.mock('../components/Sidebar', () => {

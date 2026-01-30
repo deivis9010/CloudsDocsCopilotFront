@@ -1,25 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Form, Button, Card, Spinner, Alert } from 'react-bootstrap';
-import { useFormValidation } from '../../hooks/useFormValidation';
-import { useAuth } from '../../hooks/useAuth';
-import { userService } from '../../services/user.service';
-import { ProfileHeader } from './ProfileHeader';
-import { PersonalInfoSection } from './PersonalInfoSection';
-import { SecuritySection } from './SecuritySection';
-import { PreferencesSection } from './PreferencesSection';
-import { DangerZone } from '../../components/UserProfile/DangerZone';
-import { ImageUploadModal } from '../../components/UserProfile/ImageUploadModal';
-import { NotificationToast } from '../../components/NotificationToast';
-import { Loader } from '../../components/Loader';
-import type { User } from '../../types/user.types';
+import { useFormValidation } from '../hooks/useFormValidation';
+import { useOrganization } from '../hooks/useOrganization';
+import { useToast } from '../hooks/useToast';
+import { useAuth } from '../hooks/useAuth';
+import { userService } from '../services/user.service';
+import { ProfileHeader } from '../components/UserProfile/ProfileHeader';
+import { PersonalInfoSection } from '../components/UserProfile/PersonalInfoSection';
+import { SecuritySection } from '../components/UserProfile/SecuritySection';
+import { PreferencesSection } from '../components/UserProfile/PreferencesSection';
+//import { DangerZone } from '../../components/UserProfile/DangerZone';
+import { ImageUploadModal } from '../components/UserProfile/ImageUploadModal';
+// NotificationToast is provided by ToastProvider; use `useToast` to trigger toasts
+import { Loader } from '../components/Loader';
+import type { User } from '../types/user.types';
 import styles from './UserProfile.module.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import { usePageTitle } from '../../hooks/usePageInfoTitle';
+import { usePageTitle } from '../hooks/usePageInfoTitle';
 
 export function UserProfile() {
   console.log('🎯 UserProfile componente montado');
   const navigate = useNavigate();
+  const { activeOrganization } = useOrganization();
   const { isAuthenticated } = useAuth();
   console.log('🔐 isAuthenticated:', isAuthenticated);
   
@@ -41,10 +44,8 @@ export function UserProfile() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
-  // Estados para notificaciones
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastVariant, setToastVariant] = useState<'success' | 'danger'>('success');
+  // Toast global (desde ToastProvider)
+  const { showToast } = useToast();
 
   // Estados para la imagen de perfil
   const [showImageModal, setShowImageModal] = useState(false);
@@ -127,14 +128,10 @@ export function UserProfile() {
         if (response.success) {
           setProfileImage(imagePreview);
           setShowImageModal(false);
-          setToastMessage('Imagen de perfil actualizada correctamente.');
-          setToastVariant('success');
-          setShowToast(true);
+          showToast({ message: 'Imagen de perfil actualizada correctamente.', variant: 'success', title: 'Éxito' });
         }
-      } catch (error) {
-        setToastMessage('Error al subir la imagen. Inténtalo de nuevo.');
-        setToastVariant('danger');
-        setShowToast(true);
+      } catch  {
+        showToast({ message: 'Error al subir la imagen. Inténtalo de nuevo.', variant: 'danger', title: 'Error' });
       }
     }
   };
@@ -150,9 +147,7 @@ export function UserProfile() {
 
     // Validación completa antes de guardar
     if (!validateAllFields({ name, email })) {
-      setToastMessage('Por favor corrige los errores antes de guardar.');
-      setToastVariant('danger');
-      setShowToast(true);
+      showToast({ message: 'Por favor corrige los errores antes de guardar.', variant: 'danger', title: 'Error' });
       return;
     }
     
@@ -167,42 +162,34 @@ export function UserProfile() {
       // El backend devuelve { message, user } sin success: true
       if (response && response.message) {
         console.log('🎉 Mostrando toast de éxito');
-        setToastMessage('Perfil actualizado correctamente.');
-        setToastVariant('success');
-        setShowToast(true);
+        showToast({ message: 'Perfil actualizado correctamente.', variant: 'success', title: 'Éxito' });
       }
  
-    } catch (error) {
-      setToastMessage('Error al actualizar el perfil. Inténtalo de nuevo.');
-      setToastVariant('danger');
-      setShowToast(true);
+    } catch  {
+      showToast({ message: 'Error al actualizar el perfil. Inténtalo de nuevo.', variant: 'danger', title: 'Error' });
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.')) {
-      try {
-        const response = await userService.deleteAccount();
+  // const handleDeleteAccount = async () => {
+  //   if (window.confirm('¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.')) {
+  //     try {
+  //       const response = await userService.deleteAccount();
         
-        if (response.success) {
-          setToastMessage('Cuenta eliminada correctamente.');
-          setToastVariant('success');
-          setShowToast(true);
-          
-          // Redirigir al login después de eliminar la cuenta
-          setTimeout(() => {
-            navigate('/login');
-          }, 2000);
-        }
-      } catch (error) {
-        setToastMessage('Error al eliminar la cuenta. Inténtalo de nuevo.');
-        setToastVariant('danger');
-        setShowToast(true);
-      }
-    }
-  };
+  //       if (response.success) {
+  //         showToast({ message: 'Cuenta eliminada correctamente.', variant: 'success', title: 'Éxito' });
+
+  //         // Redirigir al login después de eliminar la cuenta
+  //         setTimeout(() => {
+  //           navigate('/login');
+  //         }, 2000);
+  //       }
+  //     } catch  {
+  //       showToast({ message: 'Error al eliminar la cuenta. Inténtalo de nuevo.', variant: 'danger', title: 'Error' });
+  //     }
+  //   }
+  // };
 
   // Mostrar spinner mientras se carga el perfil
   if (isLoadingProfile) {
@@ -247,7 +234,10 @@ export function UserProfile() {
             </Button>
             <div className={styles.headerTitleWrapper}>
               <h1 className={styles.pageTitle}>Mi Perfil</h1>
-              <p className={styles.pageSubtitle}>Gestiona tu información personal</p>
+              <p className={styles.pageSubtitle}>
+                Gestiona tu información personal
+                {activeOrganization?.name ? ` — ${activeOrganization.name}` : ''}
+              </p>
             </div>
           </div>
         </Container>
@@ -344,14 +334,7 @@ export function UserProfile() {
         onSave={handleSaveImage}
       />
       
-      {/* Notificaciones */}
-      <NotificationToast
-        show={showToast}
-        onClose={() => setShowToast(false)}
-        message={toastMessage}
-        variant={toastVariant}
-        title={toastVariant === 'success' ? 'Éxito' : 'Error'}
-      />
+      {/* Notificaciones: manejadas por ToastProvider */}
 
       {/* Loader de actualización */}
       {isUpdating && <Loader message="Actualizando perfil..." fullScreen />}
