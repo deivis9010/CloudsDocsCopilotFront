@@ -9,6 +9,10 @@ import Register from './pages/Register';
 import LoginPage from './pages/LoginPage'
 import PrivateRoute from './components/PrivateRoute'
 import ConfirmAccount from './pages/ConfirmAccount'
+import CreateOrganization from './pages/CreateOrganization'
+import NoOrganization from './pages/NoOrganization'
+import RequireOrganization from './components/RequireOrganization'
+import OrganizationSettings from './pages/OrganizationSettings'
 
 function App() {
   return (
@@ -18,16 +22,25 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route
         path="/dashboard"
-        element={<PrivateRoute><Dashboard /></PrivateRoute>}
+          element={
+            <PrivateRoute>
+              <RequireOrganization>
+                <Dashboard />
+              </RequireOrganization>
+            </PrivateRoute>
+          }
       />
       <Route
         path="/profile"
         element={
-          <PrivateRoute>
-            <UserProfile />
+          <PrivateRoute>              
+            <UserProfile />              
           </PrivateRoute>
         }
       />
+        <Route path="/create-organization" element={<PrivateRoute><CreateOrganization /></PrivateRoute>} />
+        <Route path="/no-organization" element={<PrivateRoute><NoOrganization /></PrivateRoute>} />
+        <Route path="/organization/settings" element={<PrivateRoute><RequireOrganization><OrganizationSettings/></RequireOrganization></PrivateRoute>} />
       <Route path="/auth/confirmed" element={<ConfirmAccount />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

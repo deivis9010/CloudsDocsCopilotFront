@@ -4,7 +4,9 @@ import MainLayout from '../components/MainLayout';
 import DocumentCard from '../components/DocumentCard';
 import { useHttpRequest } from '../hooks/useHttpRequest';
 import { usePageTitle } from '../hooks/usePageInfoTitle';
+import useOrganization from '../hooks/useOrganization';
 import type { Document } from '../types/document.types';
+
 
 interface DocumentsApiResponse {
   success: boolean;
@@ -25,15 +27,17 @@ const Dashboard: React.FC = () => {
 
   // Usar el hook useHttpRequest para obtener documentos
   const { execute, data: documents, isLoading, isError, error } = useHttpRequest<DocumentsApiResponse>();
+  
 
-  // ID de organización (TODO: obtener del contexto de organización activa)
-  // Usando 'Acme Corporation' para desarrollo
-  const organizationId = '697bb5827ee298154fba397b';
+  // Obtener ID de la organización activa desde el contexto
+  const { activeOrganization } = useOrganization();
+  const organizationId = activeOrganization?.id ?? '';
 
   /**
    * Obtiene los documentos recientes
    */
   const fetchDocuments = useCallback(() => {
+    if (!organizationId) return;
     execute({
       method: 'GET',
       url: `/documents/recent/${organizationId}`,
@@ -58,6 +62,7 @@ const Dashboard: React.FC = () => {
   return (
     <MainLayout onDocumentsUploaded={handleDocumentsUploaded}>
       <Container fluid>
+       
        
         {/* Loading state */}
         {isLoading && (
