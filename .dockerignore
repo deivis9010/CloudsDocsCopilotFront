@@ -50,7 +50,7 @@ docs/
 .prettierrc*
 jest.config.ts
 jest.setup.ts
-tsconfig.test.json
+# tsconfig.test.json is needed because tsconfig.json references it
 
 # Logs
 logs/
