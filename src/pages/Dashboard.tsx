@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Container, Row, Col, Spinner, Alert, Dropdown } from 'react-bootstrap';
 import MainLayout from '../components/MainLayout';
 import DocumentCard from '../components/DocumentCard';
@@ -28,26 +28,37 @@ const Dashboard: React.FC = () => {
   const { execute, data: documents, isLoading, isError, error } = useHttpRequest<DocumentsApiResponse>();
   const navigate = useNavigate();
 
-  
+  // ID de organización (TODO: obtener del contexto de organización activa)
+  // Usando 'Acme Corporation' para desarrollo
+  const organizationId = '697bb5827ee298154fba397b';
+
+  /**
+   * Obtiene los documentos recientes
+   */
+  const fetchDocuments = useCallback(() => {
+    execute({
+      method: 'GET',
+      url: `/documents/recent/${organizationId}`,
+    });
+  }, [execute, organizationId]);
+
+  /**
+   * Callback cuando se suben documentos exitosamente
+   */
+  const handleDocumentsUploaded = useCallback(() => {
+    // Refrescar la lista de documentos
+    fetchDocuments();
+  }, [fetchDocuments]);
 
 
 
   React.useEffect(() => {
-    
-    // Obtener documentos al montar el componente   
-    const organizationId = '69743cfea9982c50feb47fa6';
-    
-      execute({
-      method: 'GET',
-      url: `/documents/recent/${organizationId}`,
-      
-    });
-    
-  }, [execute]);
+    fetchDocuments();
+  }, [fetchDocuments]);
 
  
   return (
-    <MainLayout>
+    <MainLayout onDocumentsUploaded={handleDocumentsUploaded}>
       <Container fluid>
         <Row className="mb-3">
           <Col>
