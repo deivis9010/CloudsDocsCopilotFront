@@ -1,10 +1,13 @@
 {
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
-    "jsx": "react-jsx",           
-    "types": ["jest", "@testing-library/jest-dom"],
+    "jsx": "react-jsx",
+    "types": ["jest", "@testing-library/jest-dom", "node"],
     "composite": true,
-    "noEmit": true
+    "noEmit": true,
+    "module": "es2020",
+    "moduleResolution": "node",
+    "verbatimModuleSyntax": false
   },
   "include": [
     "src",                       

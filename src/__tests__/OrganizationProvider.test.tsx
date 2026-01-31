@@ -20,7 +20,7 @@ jest.mock('../hooks/useAuth', () => ({
 }));
 
 const mockShowToast = jest.fn();
-jest.mock('../context/useToast', () => ({
+jest.mock('../hooks/useToast', () => ({
   useToast: () => ({ showToast: mockShowToast }),
 }));
 

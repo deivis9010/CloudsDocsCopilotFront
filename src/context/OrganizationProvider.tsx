@@ -7,10 +7,30 @@ import type { OrgContextValue, Organization, Membership, CreateOrganizationPaylo
 import { ACTIVE_ORG_STORAGE_KEY } from '../types/organization.types';
 import type { AxiosResponse } from 'axios';
 
-type MembershipWithOrg = MembershipWithOrgDTO;
+
 
 function hasProp<T extends PropertyKey>(obj: unknown, prop: T): obj is Record<T, unknown> {
   return typeof obj === 'object' && obj !== null && Object.prototype.hasOwnProperty.call(obj, prop as string);
+}
+
+function extractMembershipArray(payload: unknown): MembershipWithOrgDTO[] {
+  // Simplified extractor: accept either an array or an envelope
+  // matching the API: { success: boolean, count: number, data: Membership[] }
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload as MembershipWithOrgDTO[];
+  if (typeof payload === 'object' && payload !== null) {
+    const p = payload as Record<string, unknown>;
+    if (Array.isArray(p.data)) return p.data as MembershipWithOrgDTO[];
+    if (Array.isArray(p.memberships)) return p.memberships as MembershipWithOrgDTO[];
+  }
+  return [];
+}
+
+function getUserIdFromMembership(m: unknown): string {
+  // API returns user id in `user` field (string)
+  if (!m || typeof m !== 'object') return '';
+  const mm = m as { user?: unknown };
+  return typeof mm.user === 'string' ? mm.user : '';
 }
 
 function isMembershipWithOrg(obj: unknown): obj is MembershipWithOrgDTO {
@@ -40,7 +60,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [activeOrganization, setActiveOrganizationState] = useState<Organization | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
-  const [memberships, setMemberships] = useState<MembershipWithOrg[]>([]);
+  const [memberships, setMemberships] = useState<MembershipWithOrgDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -49,32 +69,24 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setLoading(true);
     setError(null);
     try {
-      const res: AxiosResponse<MembershipsListResponse | MembershipWithOrg[]> = await apiClient.get('/memberships/my-organizations');
-      const membershipsRaw = res?.data ?? { data: [] };
-      const rawArray = Array.isArray(membershipsRaw) ? membershipsRaw : (membershipsRaw.data ?? []);
-      const memberships: MembershipWithOrg[] = (rawArray as MembershipWithOrgDTO[]).map((m) => ({
-        id: m.id,
-        userId: m.userId ?? m.user ?? '',
-        organizationId: m.organizationId ?? m.organization?.id ?? '',
-        role: m.role ?? 'member',
-        status: m.status ?? 'active',
-        joinedAt: m.joinedAt,
-        organization: m.organization,
-      }));
-      setMemberships(memberships);
+      const res: AxiosResponse<MembershipsListResponse | MembershipWithOrgDTO[]> = await apiClient.get('/memberships/my-organizations');
+      const resData = res?.data ?? null;
+      const membershipsArray = extractMembershipArray(resData);
+    
+      setMemberships(membershipsArray);
       // extract populated organizations
-      const orgs: Organization[] = memberships
+      const orgs: Organization[] = membershipsArray
         .map((m) => m.organization)
         .filter((o): o is Organization => Boolean(o));
       setOrganizations(orgs);
       // if activeOrganization is set, try to set membership for it
       if (activeOrganization) {
-        const found = memberships.find((m) => m.organization?.id === activeOrganization.id || m.organizationId === activeOrganization.id);
+        const found = membershipsArray.find((m) => m.organization?.id === activeOrganization.id);
         if (found) {
           const normalized: Membership = {
             id: found.id,
-            userId: found.userId ?? found.user ?? '',
-            organizationId: found.organizationId ?? found.organization?.id ?? '',
+            userId: getUserIdFromMembership(found) || '',
+            organizationId: found.organization?.id ?? '',
             role: found.role ?? 'member',
             status: found.status ?? 'active',
             joinedAt: found.joinedAt,
@@ -102,7 +114,33 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const orgId = data.organizationId;
         const orgRes: AxiosResponse<GetOrganizationResponse> = await apiClient.get(`/organizations/${orgId}`);
         setActiveOrganizationState(orgRes.data.organization as Organization);
-        setMembership(null);
+        // Try to reuse already-loaded memberships to set the membership for the active org
+        let existing = memberships.find((m) => (m.organization?.id === orgId) && m.status === 'active');
+        if (!existing) {
+          // try to refresh memberships from server if not present in cache
+          try {
+            const listRes = await apiClient.get('/memberships/my-organizations');
+            const listRaw = listRes?.data ?? null;
+            const arr = extractMembershipArray(listRaw);
+            // update cached memberships
+            setMemberships(arr);
+            existing = arr.find((m) => (m.organization?.id === orgId) && m.status === 'active');
+          } catch (e) {
+            // ignore non-fatal error here; we'll leave membership unset
+            console.warn('OrganizationProvider: failed to refresh memberships while setting active org', e);
+          }
+        }
+        if (existing) {
+          const normalized: Membership = {
+            id: existing.id,
+            userId: getUserIdFromMembership(existing) || '',
+            organizationId: existing.organization?.id ?? '',
+            role: existing.role ?? 'member',
+            status: existing.status ?? 'active',
+            joinedAt: existing.joinedAt,
+          };
+          setMembership(normalized);
+        }
         try { localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, orgId); } catch { console.log('localStorage error'); }
         return;
       }
@@ -127,7 +165,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [memberships]);
   const validateActiveMembership = useCallback(async (): Promise<void> => {
     if (!activeOrganization) return;
     console.debug('OrganizationProvider: validateActiveMembership for', activeOrganization?.id);
@@ -138,16 +176,16 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
 
     // try to find in loaded memberships cache first
-    let found = memberships.find((m) => (m.organization?.id === activeOrganization.id || m.organizationId === activeOrganization.id) && m.status === 'active');
+    const found = memberships.find((m) => (m.organization?.id === activeOrganization.id) && m.status === 'active');
     if (found) {
-      const normalized: Membership = {
-        id: found.id,
-        userId: found.userId ?? found.user ?? '',
-        organizationId: found.organizationId ?? found.organization?.id ?? '',
-        role: found.role ?? 'member',
-        status: found.status ?? 'active',
-        joinedAt: found.joinedAt,
-      };
+          const normalized: Membership = {
+            id: found.id,
+            userId: getUserIdFromMembership(found) || '',
+            organizationId: found.organization?.id ?? '',
+            role: found.role ?? 'member',
+            status: found.status ?? 'active',
+            joinedAt: found.joinedAt,
+          };
       setMembership(normalized);
       return;
     }
@@ -156,36 +194,28 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       // get the user's memberships and try to find an active membership for the active org
       const listRes = await apiClient.get('/memberships/my-organizations');
-      const listRaw = listRes?.data ?? { data: [] };
-      const listArray = Array.isArray(listRaw) ? listRaw : (listRaw.data ?? []);
-      const remoteMemberships: MembershipWithOrg[] = (listArray as MembershipWithOrgDTO[]).map((m) => ({
-        id: m.id,
-        userId: m.userId ?? m.user ?? '',
-        organizationId: m.organizationId ?? m.organization?.id ?? '',
-        role: m.role ?? 'member',
-        status: m.status ?? 'active',
-        joinedAt: m.joinedAt,
-        organization: m.organization,
-      }));
-      found = remoteMemberships.find((m) => (m.organization?.id === activeOrganization.id || m.organizationId === activeOrganization.id) && m.status === 'active');
-      if (found) {
-        const userIdFromFound = found.userId ?? (hasProp(found, 'user') ? String(found.user) : '');
+      const listRaw = listRes?.data ?? null;
+      const arr = extractMembershipArray(listRaw) as MembershipWithOrgDTO[];
+      // update cached memberships with server data
+      setMemberships(arr);
+      // try to find an active membership for the active org
+      const foundItem = arr.find((m) => (m.organization?.id === activeOrganization.id ) && (m.status ?? 'active') === 'active');
+      if (foundItem) {
+        const userIdFromFound = getUserIdFromMembership(foundItem) || '';
         const normalized: Membership = {
-          id: found.id,
+          id: foundItem.id,
           userId: userIdFromFound,
-          organizationId: found.organizationId ?? found.organization?.id ?? '',
-          role: found.role ?? 'member',
-          status: found.status ?? 'active',
-          joinedAt: found.joinedAt,
+          organizationId: foundItem.organization?.id ?? '',
+          role: foundItem.role ?? 'member',
+          status: foundItem.status ?? 'active',
+          joinedAt: foundItem.joinedAt,
         };
         setMembership(normalized);
-        // also update cached memberships/state
-        setMemberships(remoteMemberships);
         return;
       }
 
       // as a last resort ask server for the active-organization endpoint (may include membership)
-      const activeRes = await apiClient.get<ActiveOrganizationResponse | MembershipWithOrg | Organization | string>('/memberships/active-organization');
+      const activeRes = await apiClient.get<ActiveOrganizationResponse | MembershipWithOrgDTO | Organization | string>('/memberships/active-organization');
       const activeData = activeRes?.data ?? null;
       if (activeData) {
         if (isWrappedActiveResponse(activeData)) {
@@ -197,12 +227,12 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             return;
           }
         } else if (isMembershipWithOrg(activeData)) {
-          const found2 = activeData as MembershipWithOrg;
+          const found2 = activeData as MembershipWithOrgDTO;
           if (String(found2.organization?.id) === String(activeOrganization.id) && found2.status === 'active') {
             const normalized: Membership = {
               id: found2.id,
-              userId: found2.userId ?? found2.user ?? '',
-              organizationId: found2.organizationId ?? found2.organization?.id ?? '',
+              userId: found2.user ?? '',
+              organizationId: found2.organization?.id ?? '',
               role: found2.role ?? 'member',
               status: found2.status ?? 'active',
               joinedAt: found2.joinedAt,

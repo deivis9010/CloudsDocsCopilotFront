@@ -33,10 +33,8 @@ function App() {
       <Route
         path="/profile"
         element={
-          <PrivateRoute>
-              <RequireOrganization>
-            <UserProfile />
-              </RequireOrganization>
+          <PrivateRoute>              
+            <UserProfile />              
           </PrivateRoute>
         }
       />

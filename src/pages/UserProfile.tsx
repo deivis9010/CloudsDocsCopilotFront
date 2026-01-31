@@ -6,6 +6,7 @@ import { useOrganization } from '../hooks/useOrganization';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../hooks/useAuth';
 import { userService } from '../services/user.service';
+import type { UserProfileResponse } from '../services/user.service';
 import { ProfileHeader } from '../components/UserProfile/ProfileHeader';
 import { PersonalInfoSection } from '../components/UserProfile/PersonalInfoSection';
 import { SecuritySection } from '../components/UserProfile/SecuritySection';
@@ -19,8 +20,15 @@ import styles from './UserProfile.module.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { usePageTitle } from '../hooks/usePageInfoTitle';
 
-export function UserProfile() {
+export type UserProfileProps = {
+  user?: Partial<User> | null;
+  onSave?: (name: string, email: string) => void;
+  onBack?: () => void;
+};
+
+export function UserProfile(props: UserProfileProps) {
   console.log('🎯 UserProfile componente montado');
+  const { user: initialUser, onSave: propsOnSave, onBack: propsOnBack } = props || {};
   const navigate = useNavigate();
   const { activeOrganization } = useOrganization();
   const { isAuthenticated } = useAuth();
@@ -41,8 +49,8 @@ export function UserProfile() {
   }, [isAuthenticated, navigate]);
 
   // Estados del formulario
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState<string>(initialUser?.name ?? '');
+  const [email, setEmail] = useState<string>(initialUser?.email ?? '');
 
   // Toast global (desde ToastProvider)
   const { showToast } = useToast();
@@ -54,14 +62,17 @@ export function UserProfile() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Estados para datos del perfil
-  const [profileData, setProfileData] = useState<User | null>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [profileData, setProfileData] = useState<User | null>(initialUser ? (initialUser as User) : null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(initialUser ? false : true);
   const [isProfileError, setIsProfileError] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Cargar datos del perfil al montar el componente
   useEffect(() => {
+    // If a `user` prop was provided by tests, skip fetching
+    if (initialUser) return;
+
     const loadProfile = async () => {
       try {
         console.log('🔄 Iniciando carga de perfil...');
@@ -69,9 +80,16 @@ export function UserProfile() {
         setIsProfileError(false);
         const response = await userService.getProfile();
         console.log('✅ Datos del perfil recibidos:', response);
-        // El backend puede devolver { success, user } o directamente el user
-        const userData = response.user || response;
-        setProfileData(userData as User);
+        // Normalize response: API may return { user } or the user object directly
+        let userData: User;
+        if (response && typeof response === 'object' && 'user' in response) {
+          userData = (response as UserProfileResponse).user;
+        } else {
+          userData = response as unknown as User;
+        }
+        setProfileData(userData);
+        setName(userData?.name ?? '');
+        setEmail(userData?.email ?? '');
       } catch (error) {
         console.error('❌ Error al cargar perfil:', error);
         setIsProfileError(true);
@@ -80,9 +98,9 @@ export function UserProfile() {
         setIsLoadingProfile(false);
       }
     };
-    
+
     loadProfile();
-  }, []);
+  }, [initialUser]);
 
   // Actualizar estados cuando se carguen los datos del perfil
   useEffect(() => {
@@ -156,13 +174,14 @@ export function UserProfile() {
       console.log('📤 Enviando actualización:', { name, email });
       console.log('👤 Datos completos del usuario:', profileData);
       const response = await userService.updateProfile({ name, email });
-      
+
       console.log('✅ Respuesta del servidor:', response);
 
-      // El backend devuelve { message, user } sin success: true
-      if (response && response.message) {
+      // The backend returns an object with `message` and `user`.
+      if (response && typeof response === 'object' && 'message' in response) {
         console.log('🎉 Mostrando toast de éxito');
         showToast({ message: 'Perfil actualizado correctamente.', variant: 'success', title: 'Éxito' });
+        if (propsOnSave) propsOnSave(name, email);
       }
  
     } catch  {
@@ -239,6 +258,15 @@ export function UserProfile() {
                 {activeOrganization?.name ? ` — ${activeOrganization.name}` : ''}
               </p>
             </div>
+            <div className={styles.headerActionsRight}>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+              >
+                Ir al Dashboard
+              </Button>
+            </div>
           </div>
         </Container>
       </div>
@@ -283,7 +311,10 @@ export function UserProfile() {
                   <div className={styles.buttonContainer}>
                     <Button
                       variant="outline-secondary"
-                      onClick={() => navigate('/dashboard')}
+                      onClick={() => {
+                        if (propsOnBack) return propsOnBack();
+                        return navigate('/dashboard');
+                      }}
                       type="button"
                       className={styles.secondaryButton}
                       disabled={isUpdating}
@@ -342,3 +373,5 @@ export function UserProfile() {
     </>
   );
 }
+
+export default UserProfile;

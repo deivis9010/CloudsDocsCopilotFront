@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Table, Spinner, Form } from 'react-bootstrap';
 import useOrganization from '../hooks/useOrganization';
+import MainLayout from '../components/MainLayout';
+import { usePageTitle } from '../hooks/usePageInfoTitle';
 import { useAuth } from '../hooks/useAuth';
 import styles from './OrganizationSettings.module.css';
 import InviteMemberModal from '../components/InviteMemberModal';
@@ -8,16 +10,24 @@ import ConfirmActionModal from '../components/ConfirmActionModal';
 import { apiClient } from '../api';
 import { useToast } from '../hooks/useToast';
 
-type OrgMember = {
+interface OrgMemberUser {
   id: string;
-  userId?: string | null;
-  email?: string | null;
   name?: string | null;
-  photoUrl?: string | null;
+  email?: string | null;
+  avatar?: string | null;
+}
+
+interface OrgMember {
+  id: string;
+  user?: OrgMemberUser | null;
+  organization?: string | null;
   role?: string | null;
   status?: string | null;
-  invitedAt?: string | null;
-};
+  rootFolder?: string | null;
+  joinedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
 
 // Small MD5 implementation (public domain compact version)
 function md5(str: string): string {
@@ -167,6 +177,12 @@ function md5(str: string): string {
 
 const OrganizationSettings: React.FC = () => {
   const { activeOrganization, isAdmin, isOwner } = useOrganization();
+  usePageTitle({
+    title: 'Configuración de Organización',
+    subtitle: 'Gestiona miembros y ajustes',
+    documentTitle: 'Configuración de Organización',
+    metaDescription: 'Ajustes y gestión de miembros de la organización activa'
+  });
   const [showInvite, setShowInvite] = useState(false);
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
@@ -223,10 +239,10 @@ const OrganizationSettings: React.FC = () => {
   }, [activeOrganization]);
 
   return (
-    <Container className={styles.container}>
-      <Row>
+    <MainLayout>
+      <Container fluid className={styles.container}>
+      <Row className="mb-2">
         <Col>
-          <h2>Configuración de Organización</h2>
           <p>Organización activa: <strong>{activeOrganization?.name ?? 'Ninguna'}</strong></p>
           <div className="mt-2">
             {(isAdmin() || isOwner()) ? (
@@ -268,7 +284,7 @@ const OrganizationSettings: React.FC = () => {
                 const filtered = members.filter((m) => {
                   const q = query.trim().toLowerCase();
                   if (!q) return true;
-                  return ((m.name ?? '') + ' ' + (m.email ?? '')).toLowerCase().includes(q);
+                  return ((m.user?.name ?? '') + ' ' + (m.user?.email ?? '')).toLowerCase().includes(q);
                 });
                 const pageMembers = filtered;
                 return (
@@ -280,26 +296,26 @@ const OrganizationSettings: React.FC = () => {
                                   <div style={{width:32, height:32, borderRadius:16, overflow:'hidden', position:'relative'}}>
                                     {/* Image (photoUrl preferred, then Gravatar). Hidden on error to reveal initials fallback */}
                                     {(() => {
-                                      const email = (m.email ?? '').trim().toLowerCase();
+                                      const email = (m.user?.email ?? '').trim().toLowerCase();
                                       const gravatar = email ? `https://www.gravatar.com/avatar/${md5(email)}?d=404&s=64` : null;
-                                      const src = m.photoUrl ?? gravatar ?? undefined;
+                                      const src = m.user?.avatar ?? gravatar ?? undefined;
                                       return src ? (
                                         <img
                                           src={src}
-                                          alt={m.name ?? m.email ?? 'avatar'}
+                                          alt={m.user?.name ?? m.user?.email ?? 'avatar'}
                                           style={{width:32, height:32, objectFit:'cover', display:'block'}}
                                           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                                         />
                                       ) : null;
                                     })()}
                                     <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', backgroundColor:'#6366f1', color:'#fff', fontWeight:600}}>
-                                      {((m.name ?? m.email ?? 'U').trim()[0] || 'U').toUpperCase()}
+                                      {((m.user?.name ?? m.user?.email ?? 'U').trim()[0] || 'U').toUpperCase()}
                                     </div>
                                   </div>
-                                  <div>{m.name ?? m.userId ?? '—'}</div>
+                                  <div>{m.user?.name ?? m.user?.email ?? '—'}</div>
                                 </div>
                               </td>
-                              <td>{m.email ?? '—'}</td>
+                              <td>{m.user?.email ?? '—'}</td>
                               <td>
                                 {(isAdmin() || isOwner()) ? (
                                   (m.role === 'owner') ? (
@@ -311,7 +327,7 @@ const OrganizationSettings: React.FC = () => {
                                       onChange={(e) => {
                                         const newRole = e.target.value;
                                         if (!activeOrganization) return;
-                                        if (m.userId && user && m.userId === user.id) {
+                                        if (m.user?.id && user && m.user.id === user.id) {
                                           showToast({ message: 'No puedes cambiar tu propio rol', variant: 'warning', title: 'Organización' });
                                           return;
                                         }
@@ -334,10 +350,10 @@ const OrganizationSettings: React.FC = () => {
                               <Button
                                 size="sm"
                                 variant="outline-danger"
-                                disabled={Boolean(m.userId && user && m.userId === user.id)}
+                                disabled={Boolean(m.user?.id && user && m.user.id === user.id)}
                                 onClick={() => {
                                   if (!activeOrganization) return;
-                                  if (m.userId && user && m.userId === user.id) {
+                                  if (m.user?.id && user && m.user.id === user.id) {
                                     showToast({ message: 'No puedes revocar tu propia membresía', variant: 'warning', title: 'Organización' });
                                     return;
                                   }
@@ -396,7 +412,7 @@ const OrganizationSettings: React.FC = () => {
         }}
       >
         <p>
-          ¿Confirmas cambiar el rol de <strong>{pendingRoleChange?.member.name ?? pendingRoleChange?.member.email}</strong> a <strong>{pendingRoleChange?.newRole}</strong>?
+          ¿Confirmas cambiar el rol de <strong>{pendingRoleChange?.member.user?.name ?? pendingRoleChange?.member.user?.email}</strong> a <strong>{pendingRoleChange?.newRole}</strong>?
         </p>
       </ConfirmActionModal>
 
@@ -424,7 +440,7 @@ const OrganizationSettings: React.FC = () => {
           }
         }}
       >
-        <p>¿Confirmas revocar a <strong>{pendingRevoke?.name ?? pendingRevoke?.email}</strong> de la organización?</p>
+        <p>¿Confirmas revocar a <strong>{pendingRevoke?.user?.name ?? pendingRevoke?.user?.email}</strong> de la organización?</p>
       </ConfirmActionModal>
 
       <ConfirmActionModal
@@ -451,9 +467,10 @@ const OrganizationSettings: React.FC = () => {
           }
         }}
       >
-        <p>¿Deseas reenviar la invitación a <strong>{pendingResend?.name ?? pendingResend?.email}</strong>?</p>
+        <p>¿Deseas reenviar la invitación a <strong>{pendingResend?.user?.name ?? pendingResend?.user?.email}</strong>?</p>
       </ConfirmActionModal>
-    </Container>
+      </Container>
+    </MainLayout>
   );
 };
 

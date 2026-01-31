@@ -49,13 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem}) => {
       </Nav>
 
       <div className={styles.sidebarFooter}>
-        <div className={styles.userInfo}>
-          <div className={styles.userAvatar}>U</div>
-          <div className={styles.userDetails}>
-            <div className={styles.userName}>Usuario</div>
-            <div className={styles.userEmail}>usuario@empresa.com</div>
-          </div>
-        </div>
+        <div className={styles.footerText}>© 2026 CloudDocs Copilot</div>
       </div>
     </div>
   );

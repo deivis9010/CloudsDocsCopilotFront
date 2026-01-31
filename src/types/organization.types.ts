@@ -60,10 +60,8 @@ export interface GetOrganizationResponse {
 
 export interface MembershipWithOrgDTO {
   id: ID;
-  user?: ID;
-  userId?: ID;
-  organization?: Organization;
-  organizationId?: ID;
+  user?: ID;  
+  organization?: Organization;  
   role?: MembershipRole | string;
   status?: MembershipStatus | string;
   rootFolder?: ID;

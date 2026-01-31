@@ -7,12 +7,17 @@ const config: Config = {
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^uuid$': '<rootDir>/__mocks__/uuid.js',
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: 'tsconfig.test.json',
     }],
   },
+  // allow transforming certain ESM packages in node_modules (eg. uuid)
+  transformIgnorePatterns: [
+    '/node_modules/(?!uuid)'
+  ],
   // Define globals to replace import.meta.env
   globals: {
     'import.meta': {
