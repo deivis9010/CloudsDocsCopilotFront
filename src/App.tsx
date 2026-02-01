@@ -16,6 +16,10 @@ import LoginPage from './pages/LoginPage'
 import PrivateRoute from './components/PrivateRoute'
 import ConfirmAccount from './pages/ConfirmAccount'
 
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
+
+
 function App() {
   const navigate = useNavigate();
   const [user, setUser] = useState({ name: 'Juan Pérez', email: 'juan@ejemplo.com' })
@@ -29,6 +33,9 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<LoginPage />} />
+
+      <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
    
       <Route path="/register" element={<Register />} />
       
